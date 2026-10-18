@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import * as agentService from "../services/agentService";
+import rateLimit from "express-rate-limit";
 
 export const agentRoutes = Router();
 
@@ -9,7 +10,15 @@ const approveBody = z.object({
   reply: z.string().trim().min(1).max(5000).optional(),
 });
 
-agentRoutes.post("/messages/:id/run", async (req, res) => {
+const runLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 10,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many agent runs. Slow down." },
+});
+
+agentRoutes.post("/messages/:id/run", runLimiter, async (req, res) => {
   const { id } = idParams.parse(req.params);
   res.status(201).json(await agentService.runForMessage(id));
 });
