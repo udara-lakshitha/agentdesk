@@ -15,3 +15,5 @@ export type AgentRun = {
   createdAt: string;
   reviewedAt: string | null;
 };
+
+export type User = { id: number; email: string };

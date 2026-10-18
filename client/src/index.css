@@ -127,3 +127,10 @@ button.danger { color: var(--danger); border-color: var(--danger); }
   color: var(--danger);
   border-radius: 6px;
 }
+
+.topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.user-box { display: flex; align-items: center; gap: 10px; }
+
+.login { max-width: 360px; margin: 80px auto; display: grid; gap: 8px; }
+.login h1 { margin: 0; }
+.login .error-banner { margin-top: 0; }
