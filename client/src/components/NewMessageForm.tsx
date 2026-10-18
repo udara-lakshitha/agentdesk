@@ -24,7 +24,7 @@ export function NewMessageForm({ onCreate, busy }: Props) {
         onChange={(e) => setFrom(e.target.value)}
       />
       <textarea
-        placeholder="What did the customer write?"
+        placeholder="Customer email (e.g. nimal@example.com)"
         rows={3}
         value={body}
         onChange={(e) => setBody(e.target.value)}

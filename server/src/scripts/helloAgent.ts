@@ -3,7 +3,7 @@ import { runAgent } from "../agent/runAgent";
 
 async function main() {
   const message = process.argv[2] ?? "Where is my order 1001? When will it arrive?";
-  const result = await runAgent(createGeminiAgentLlm(), message);
+   const result = await runAgent(createGeminiAgentLlm(), message, { customerId: 1 });
   console.log("STEPS:", JSON.stringify(result.steps, null, 2));
   console.log("REPLY:", result.reply);
 }

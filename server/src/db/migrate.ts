@@ -23,6 +23,29 @@ async function migrate() {
       reviewed_at TIMESTAMPTZ
     )
   `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS customers (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL UNIQUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS orders (
+      id SERIAL PRIMARY KEY,
+      order_number TEXT NOT NULL UNIQUE,
+      customer_id INTEGER NOT NULL REFERENCES customers(id),
+      status TEXT NOT NULL
+        CHECK (status IN ('processing', 'shipped', 'delivered', 'cancelled')),
+      eta DATE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `);
+  await pool.query(`
+    ALTER TABLE messages
+    ADD COLUMN IF NOT EXISTS customer_id INTEGER REFERENCES customers(id)
+  `);
   console.log("Migration complete");
   await pool.end();
 }

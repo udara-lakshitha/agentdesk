@@ -1,13 +1,12 @@
 import type { AgentLlm, ChatMessage, ToolCall } from "./llm";
-import { tools } from "./tools";
+import { tools, type ToolContext } from "./tools";
 
 const MAX_STEPS = 5;
 
 const SYSTEM_PROMPT =
-  "You are a customer support assistant for a small business. " +
-  "Use the available tools to look up real information. " +
-  "Never invent order details. If a tool says nothing was found, say so. " +
-  "Write a short, polite reply the business can send to the customer.";
+   "Never invent order details." + 
+   "If a tool says nothing was found," + 
+   "say you could not find that order on the customer's account and ask them to double-check the order number.";
 
 export type AgentStep = {
   tool: string;
@@ -20,17 +19,18 @@ export type AgentResult = {
   steps: AgentStep[];
 };
 
-async function executeTool(call: ToolCall): Promise<unknown> {
+async function executeTool(call: ToolCall, ctx: ToolContext): Promise<unknown> {
   const tool = tools.find((t) => t.definition.name === call.name);
   if (!tool) return { error: `Unknown tool: ${call.name}` };
   try {
-    return await tool.execute(call.args);
+    return await tool.execute(call.args, ctx);
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Tool failed" };
   }
 }
 
-export async function runAgent(llm: AgentLlm, userMessage: string): Promise<AgentResult> {
+export async function runAgent(llm: AgentLlm,
+  userMessage: string, ctx: ToolContext): Promise<AgentResult> {
   const messages: ChatMessage[] = [{ role: "user", text: userMessage }];
   const steps: AgentStep[] = [];
 
@@ -53,7 +53,7 @@ export async function runAgent(llm: AgentLlm, userMessage: string): Promise<Agen
     });
 
     for (const call of response.toolCalls) {
-      const result = await executeTool(call);
+      const result = await executeTool(call, ctx);
       steps.push({ tool: call.name, args: call.args, result });
       messages.push({ role: "tool", toolCallId: call.id, name: call.name, result });
     }
