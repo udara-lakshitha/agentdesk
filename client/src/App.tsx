@@ -1,46 +1,114 @@
-import { useState, useEffect } from "react";
-
-type Message = { id: number, from: string, body: string, createdAt: string }; 
+import { useCallback, useEffect, useState } from "react";
+import * as api from "./api";
+import type { AgentRun, Message } from "./types";
+import { MessageList } from "./components/MessageList";
+import { NewMessageForm } from "./components/NewMessageForm";
+import { RunPanel } from "./components/RunPanel";
 
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [from, setFrom] = useState("");
-  const [body, setBody] = useState("");
+  const [runs, setRuns] = useState<AgentRun[]>([]);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  async function loadMessages() {
-    const res = await fetch("http://localhost:4000/api/messages");
-    setMessages(await res.json());
-  }
-
-  useEffect(() => {
-    loadMessages();
+  const refresh = useCallback(async () => {
+    try {
+      const [m, r] = await Promise.all([api.listMessages(), api.listRuns()]);
+      setMessages(m);
+      setRuns(r);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not load data");
+    }
   }, []);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    await fetch("http://localhost:4000/api/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ from, body }),
-    });
-    setBody("");
-    setFrom("");
-    loadMessages();
+  useEffect(() => {
+    let cancelled = false;
+
+    Promise.all([api.listMessages(), api.listRuns()])
+      .then(([m, r]) => {
+        if (cancelled) return;
+        setMessages(m);
+        setRuns(r);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setError(e instanceof Error ? e.message : "Could not load data");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Runs an action, shows any error, reloads data, reports success.
+  async function act(fn: () => Promise<unknown>): Promise<boolean> {
+    setBusy(true);
+    setError(null);
+    let ok = true;
+    try {
+      await fn();
+    } catch (e) {
+      ok = false;
+      setError(e instanceof Error ? e.message : "Something went wrong");
+    }
+    await refresh();
+    setBusy(false);
+    return ok;
   }
 
+  const selected = messages.find((m) => m.id === selectedId);
+  const selectedRun = runs.find((r) => r.messageId === selectedId);
+
   return (
-    <div style={{ maxWidth: 600, margin: "2rem auto" }}>
-      <h1>AgentDesk Inbox</h1>
-      <form onSubmit={handleSubmit}>
-        <input placeholder="From" value={from} onChange={(e) => setFrom(e.target.value)} />
-        <textarea placeholder="Message" value={body} onChange={(e) => setBody(e.target.value)} />
-        <button type="submit">Send</button>
-      </form>
-      <ul>
-        {messages.map((m) => (
-          <li key={m.id}><strong>{m.from}:</strong> {m.body}</li>
-        ))}
-      </ul>
+    <div className="app">
+      <header>
+        <h1>AgentDesk</h1>
+        <p className="muted">Review what your AI agent drafts before anything goes out.</p>
+      </header>
+
+      {error && (
+        <div className="error-banner" role="alert">
+          {error}
+        </div>
+      )}
+
+      <main className="layout">
+        <aside>
+          <NewMessageForm
+            busy={busy}
+            onCreate={(from, body) =>
+              act(async () => {
+                const created = await api.createMessage(from, body);
+                setSelectedId(created.id);
+              })
+            }
+          />
+          <MessageList
+            messages={messages}
+            runs={runs}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+          />
+        </aside>
+
+        <div>
+          {selected ? (
+            <RunPanel
+              message={selected}
+              run={selectedRun}
+              busy={busy}
+              onRun={() => void act(() => api.runAgent(selected.id))}
+              onApprove={(reply) =>
+                selectedRun && void act(() => api.approveRun(selectedRun.id, reply))
+              }
+              onReject={() => selectedRun && void act(() => api.rejectRun(selectedRun.id))}
+            />
+          ) : (
+            <p className="muted">Select a message to see details.</p>
+          )}
+        </div>
+      </main>
     </div>
   );
 }
