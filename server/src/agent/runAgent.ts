@@ -49,6 +49,7 @@ export async function runAgent(llm: AgentLlm, userMessage: string): Promise<Agen
       role: "assistant",
       text: response.text,
       toolCalls: response.toolCalls,
+      raw: response.raw,
     });
 
     for (const call of response.toolCalls) {
