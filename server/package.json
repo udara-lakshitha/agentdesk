@@ -6,6 +6,7 @@
   "scripts": {
     "migrate": "tsx src/db/migrate.ts",
     "dev": "tsx watch src/index.ts",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "keywords": [],
