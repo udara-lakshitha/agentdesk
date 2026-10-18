@@ -24,6 +24,7 @@ export default function App() {
       body: JSON.stringify({ from, body }),
     });
     setBody("");
+    setFrom("");
     loadMessages();
   }
 
