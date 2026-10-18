@@ -21,3 +21,11 @@ export async function insertMessage(from: string, body: string): Promise<Message
     );
     return rows[0];
 }
+
+export async function getMessage(id: number): Promise<Message | null> {
+  const { rows } = await pool.query(
+    `SELECT ${columns} FROM messages WHERE id = $1`,
+    [id]
+  );
+  return rows[0] ?? null;
+}
