@@ -2,6 +2,10 @@ import { describe, it, expect, vi } from "vitest";
 import request from "supertest";
 import { app } from "./app";
 
+vi.mock("./middleware/requireAuth", () => ({
+  requireAuth: (_req: unknown, _res: unknown, next: () => void) => next(),
+}));
+
 vi.mock("./services/agentService", () => ({
   runForMessage: vi.fn().mockResolvedValue({ id: 1, status: "pending_approval" }),
   listRuns: vi.fn().mockResolvedValue([]),
