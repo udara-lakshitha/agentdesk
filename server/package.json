@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "hello:llm": "tsx src/scripts/helloLlm.ts",
-    "hello:agent": "tsx src/scripts/helloAgent.ts"
+    "hello:agent": "tsx src/scripts/helloAgent.ts",
+    "seed": "tsx src/db/seed.ts"
   },
   "keywords": [],
   "author": "",

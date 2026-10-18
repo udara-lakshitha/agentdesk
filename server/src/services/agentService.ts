@@ -14,7 +14,7 @@ export async function runForMessage(
 
   let result: AgentResult;
   try {
-    result = await runAgent(llm, message.body);
+    result = await runAgent(llm, message.body, { customerId: message.customerId });
   } catch (err) {
     return runs.insertRun({
       messageId,

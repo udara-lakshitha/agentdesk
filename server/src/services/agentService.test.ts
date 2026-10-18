@@ -37,7 +37,7 @@ describe("runForMessage", () => {
 
   it("saves a pending run when the agent succeeds", async () => {
     vi.mocked(messages.getMessage).mockResolvedValue({
-      id: 1, from: "Nimal", body: "Where is order 1001?", createdAt: "",
+      id: 1, from: "nimal@example.com", body: "Where is order 1001?", createdAt: "", customerId: 1,
     });
     const run = await service.runForMessage(1, okLlm);
     expect(runs.insertRun).toHaveBeenCalledWith(
@@ -48,7 +48,7 @@ describe("runForMessage", () => {
 
   it("saves a failed run when the agent throws", async () => {
     vi.mocked(messages.getMessage).mockResolvedValue({
-      id: 1, from: "Nimal", body: "Hi", createdAt: "",
+      id: 1, from: "nimal@example.com", body: "Where is order 1001?", createdAt: "", customerId: 1,
     });
     await service.runForMessage(1, badLlm);
     expect(runs.insertRun).toHaveBeenCalledWith(
